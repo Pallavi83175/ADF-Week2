@@ -17,7 +17,7 @@
 				"typeProperties": {
 					"source": {
 						"type": "AzureSqlSource",
-						"sqlReaderQuery": "SELECT TOP 1 WatermarkValue FROM dbo.ETL_Watermark WHERE SourceSystem = 'DummySource' AND EntityName = 'Weather' ORDER BY LastRunUtc DESC",
+						"sqlReaderQuery": "SELECT TOP 1 WatermarkValue FROM dbo.ETL_Watermark WHERE SourceSystem = 'SourceAPI' AND EntityName = 'Weather' ORDER BY LastRunUtc DESC",
 						"queryTimeout": "00:05:00",
 						"partitionOption": "None"
 					},
@@ -29,8 +29,8 @@
 				}
 			},
 			{
-				"name": "CopyRawToStaging",
-				"type": "Copy",
+				"name": "GetWeatherLocations",
+				"type": "Lookup",
 				"dependsOn": [
 					{
 						"activity": "GetWatermark",
@@ -49,94 +49,210 @@
 				"userProperties": [],
 				"typeProperties": {
 					"source": {
-						"type": "JsonSource",
-						"storeSettings": {
-							"type": "AzureBlobFSReadSettings",
-							"recursive": false
-						},
-						"formatSettings": {
-							"type": "JsonReadSettings"
-						}
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT LocationId, Latitude, Longitude, Timezone, TimezoneOffset FROM dbo.WeatherLocation WHERE Latitude IS NOT NULL AND Longitude IS NOT NULL ORDER BY LocationId",
+						"queryTimeout": "00:05:00",
+						"partitionOption": "None"
 					},
-					"sink": {
-						"type": "AzureSqlSink",
-						"writeBehavior": "insert",
-						"sqlWriterUseTableLock": false
+					"dataset": {
+						"referenceName": "AzureSqlTable5",
+						"type": "DatasetReference"
 					},
-					"enableStaging": false,
-					"translator": {
-						"type": "TabularTranslator",
-						"mappings": [
-							{
-								"source": {
-									"path": "$['dt']"
-								},
-								"sink": {
-									"name": "dt"
-								}
-							},
-							{
-								"source": {
-									"path": "$['coord']['lat']"
-								},
-								"sink": {
-									"name": "Latitude"
-								}
-							},
-							{
-								"source": {
-									"path": "$['coord']['lon']"
-								},
-								"sink": {
-									"name": "Longitude"
-								}
-							},
-							{
-								"source": {
-									"path": "$['timezone']"
-								},
-								"sink": {
-									"name": "TimezoneOffset"
-								}
-							},
-							{
-								"source": {
-									"path": "$['sys']['sunrise']"
-								},
-								"sink": {
-									"name": "Sunrise"
-								}
-							},
-							{
-								"source": {
-									"path": "$['sys']['sunset']"
-								},
-								"sink": {
-									"name": "Sunset"
-								}
-							}
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEachLocation",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "GetWeatherLocations",
+						"dependencyConditions": [
+							"Succeeded"
 						]
 					}
-				},
-				"inputs": [
-					{
-						"referenceName": "Json1",
-						"type": "DatasetReference"
-					}
 				],
-				"outputs": [
-					{
-						"referenceName": "AzureSqlTable6",
-						"type": "DatasetReference"
-					}
-				]
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('GetWeatherLocations').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "GetWeatherAPI",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 4,
+								"retryIntervalInSeconds": 45,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "RestSource",
+									"httpRequestTimeout": "00:05:00",
+									"requestInterval": "00.00:00:00.100",
+									"requestMethod": "GET"
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "RestResource1",
+									"type": "DatasetReference",
+									"parameters": {
+										"lat": {
+											"value": "@string(item().Latitude)",
+											"type": "Expression"
+										},
+										"lon": {
+											"value": "@string(item().Longitude)",
+											"type": "Expression"
+										},
+										"appid": {
+											"value": "@pipeline().parameters.appid",
+											"type": "Expression"
+										},
+										"units": {
+											"value": "@pipeline().parameters.units",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "Json1",
+									"type": "DatasetReference"
+								}
+							]
+						},
+						{
+							"name": "CopyRawToStaging",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "GetWeatherAPI",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 4,
+								"retryIntervalInSeconds": 45,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": false
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"sink": {
+									"type": "AzureSqlSink",
+									"writeBehavior": "insert",
+									"sqlWriterUseTableLock": false
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"path": "$['dt']"
+											},
+											"sink": {
+												"name": "dt"
+											}
+										},
+										{
+											"source": {
+												"path": "$['coord']['lat']"
+											},
+											"sink": {
+												"name": "Latitude"
+											}
+										},
+										{
+											"source": {
+												"path": "$['coord']['lon']"
+											},
+											"sink": {
+												"name": "Longitude"
+											}
+										},
+										{
+											"source": {
+												"path": "$['timezone']"
+											},
+											"sink": {
+												"name": "TimezoneOffset"
+											}
+										},
+										{
+											"source": {
+												"path": "$['sys']['sunrise']"
+											},
+											"sink": {
+												"name": "Sunrise"
+											}
+										},
+										{
+											"source": {
+												"path": "$['sys']['sunset']"
+											},
+											"sink": {
+												"name": "Sunset"
+											}
+										}
+									]
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "Json1",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "AzureSqlTable6",
+									"type": "DatasetReference"
+								}
+							]
+						}
+					]
+				}
 			},
 			{
 				"name": "SetStagingAudit",
 				"type": "Script",
 				"dependsOn": [
 					{
-						"activity": "CopyRawToStaging",
+						"activity": "ForEachLocation",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -214,7 +330,7 @@
 					"storedProcedureName": "dbo.usp_UpdateWatermark",
 					"storedProcedureParameters": {
 						"SourceSystem": {
-							"value": "DummySource"
+							"value": "SourceAPI"
 						},
 						"EntityName": {
 							"value": "Weather"
@@ -239,12 +355,24 @@
 				}
 			}
 		],
+		"parameters": {
+			"appid": {
+				"type": "String"
+			},
+			"units": {
+				"type": "String",
+				"defaultValue": "metric"
+			}
+		},
 		"annotations": [
 			"Project1",
 			"Weather",
-			"DummyData",
+			"REST",
 			"ADLS",
-			"SQL"
+			"ForEach",
+			"Staging",
+			"Curated",
+			"Watermark"
 		]
 	}
 }
