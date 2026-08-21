@@ -1,0 +1,78 @@
+{
+	"name": "AzureSqlTable4",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "dt",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "Latitude",
+				"type": "decimal",
+				"precision": 9,
+				"scale": 6
+			},
+			{
+				"name": "Longitude",
+				"type": "decimal",
+				"precision": 9,
+				"scale": 6
+			},
+			{
+				"name": "Timezone",
+				"type": "nvarchar"
+			},
+			{
+				"name": "TimezoneOffset",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "Sunrise",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "Sunset",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "Moonrise",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "Moonset",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "MoonPhase",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 4
+			},
+			{
+				"name": "IngestTs",
+				"type": "datetime2",
+				"scale": 3
+			},
+			{
+				"name": "SourceFile",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "Weather"
+		}
+	}
+}

@@ -1,0 +1,36 @@
+{
+	"name": "api_dataflow",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "Json1",
+						"type": "DatasetReference"
+					},
+					"name": "WeatherRawSource"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "FlattenWeather"
+				},
+				{
+					"name": "derivedColumn1"
+				}
+			],
+			"scriptLines": [
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     documentForm: 'arrayOfDocuments') ~> WeatherRawSource",
+				"WeatherRawSource foldDown(unroll(),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> FlattenWeather",
+				"FlattenWeather derive() ~> derivedColumn1"
+			]
+		}
+	}
+}

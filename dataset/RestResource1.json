@@ -1,0 +1,32 @@
+{
+	"name": "RestResource1",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "RestService1",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"lat": {
+				"type": "string"
+			},
+			"lon": {
+				"type": "string"
+			},
+			"appid": {
+				"type": "string"
+			},
+			"units": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": {
+				"value": "@concat('/data/2.5/weather?lat=',dataset().lat,'&lon=',dataset().lon,'&appid=',dataset().appid,'&units=',dataset().units)",
+				"type": "Expression"
+			}
+		},
+		"schema": []
+	}
+}
