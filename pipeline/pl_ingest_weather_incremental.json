@@ -1,0 +1,250 @@
+{
+	"name": "pl_ingest_weather_incremental",
+	"properties": {
+		"activities": [
+			{
+				"name": "GetWatermark",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 4,
+					"retryIntervalInSeconds": 45,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT TOP 1 WatermarkValue FROM dbo.ETL_Watermark WHERE SourceSystem = 'DummySource' AND EntityName = 'Weather' ORDER BY LastRunUtc DESC",
+						"queryTimeout": "00:05:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSqlTable3",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "CopyRawToStaging",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "GetWatermark",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 4,
+					"retryIntervalInSeconds": 45,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "$['dt']"
+								},
+								"sink": {
+									"name": "dt"
+								}
+							},
+							{
+								"source": {
+									"path": "$['coord']['lat']"
+								},
+								"sink": {
+									"name": "Latitude"
+								}
+							},
+							{
+								"source": {
+									"path": "$['coord']['lon']"
+								},
+								"sink": {
+									"name": "Longitude"
+								}
+							},
+							{
+								"source": {
+									"path": "$['timezone']"
+								},
+								"sink": {
+									"name": "TimezoneOffset"
+								}
+							},
+							{
+								"source": {
+									"path": "$['sys']['sunrise']"
+								},
+								"sink": {
+									"name": "Sunrise"
+								}
+							},
+							{
+								"source": {
+									"path": "$['sys']['sunset']"
+								},
+								"sink": {
+									"name": "Sunset"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "Json1",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "AzureSqlTable6",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "SetStagingAudit",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "CopyRawToStaging",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "UPDATE dbo.stg_Weather SET IngestTs = COALESCE(IngestTs, SYSUTCDATETIME()), SourceFile = COALESCE(SourceFile, 'weather.json') WHERE IngestTs IS NULL OR SourceFile IS NULL;"
+						}
+					],
+					"scriptBlockExecutionTimeout": "00:05:00"
+				}
+			},
+			{
+				"name": "MergeToCurated",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "SetStagingAudit",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 4,
+					"retryIntervalInSeconds": 45,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "dbo.usp_MergeWeather"
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "UpdateWatermark",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "MergeToCurated",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 4,
+					"retryIntervalInSeconds": 45,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "dbo.usp_UpdateWatermark",
+					"storedProcedureParameters": {
+						"SourceSystem": {
+							"value": "DummySource"
+						},
+						"EntityName": {
+							"value": "Weather"
+						},
+						"NewWatermark": {
+							"value": {
+								"value": "@utcnow()",
+								"type": "Expression"
+							}
+						},
+						"RowsExtracted": {
+							"value": {
+								"value": "@activity('CopyRawToStaging').output.rowsCopied",
+								"type": "Expression"
+							}
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"annotations": [
+			"Project1",
+			"Weather",
+			"DummyData",
+			"ADLS",
+			"SQL"
+		]
+	}
+}

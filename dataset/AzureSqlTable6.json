@@ -1,0 +1,57 @@
+{
+	"name": "AzureSqlTable6",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "dt",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "sunrise",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "sunset",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "moonrise",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "moonset",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "moon_phase",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 4
+			},
+			{
+				"name": "ingest_ts",
+				"type": "datetime2",
+				"scale": 3
+			},
+			{
+				"name": "source_file",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "stg_Weather"
+		}
+	}
+}
