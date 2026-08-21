@@ -357,7 +357,8 @@
 		],
 		"parameters": {
 			"appid": {
-				"type": "String"
+				"type": "String",
+				"defaultValue": "pl_ingest_weather_incremental"
 			},
 			"units": {
 				"type": "String",
