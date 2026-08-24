@@ -158,17 +158,83 @@
 						"mappings": [
 							{
 								"source": {
-									"path": "$['version']"
+									"path": "['id']"
+								},
+								"sink": {
+									"name": "WorkId",
+									"type": "String"
 								}
 							},
 							{
 								"source": {
-									"path": "$['documentation_url']"
+									"path": "['doi']"
+								},
+								"sink": {
+									"name": "DOI",
+									"type": "String"
 								}
 							},
 							{
 								"source": {
-									"path": "$['msg']"
+									"path": "['title']"
+								},
+								"sink": {
+									"name": "Title",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['publication_year']"
+								},
+								"sink": {
+									"name": "PublicationYear",
+									"type": "Int32"
+								}
+							},
+							{
+								"source": {
+									"path": "['publication_date']"
+								},
+								"sink": {
+									"name": "PublicationDate",
+									"type": "Date"
+								}
+							},
+							{
+								"source": {
+									"path": "['language']"
+								},
+								"sink": {
+									"name": "Language",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['type']"
+								},
+								"sink": {
+									"name": "Type",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['open_access']['is_oa']"
+								},
+								"sink": {
+									"name": "IsOpenAccess",
+									"type": "Boolean"
+								}
+							},
+							{
+								"source": {
+									"path": "$['cited_by_count']"
+								},
+								"sink": {
+									"name": "CitedByCount",
+									"type": "Int32"
 								}
 							}
 						],
@@ -193,7 +259,7 @@
 				"type": "Script",
 				"dependsOn": [
 					{
-						"activity": "LoadWorksToStaging",
+						"activity": "MergeWorksToCurated",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -217,6 +283,39 @@
 						}
 					],
 					"scriptBlockExecutionTimeout": "00:10:00"
+				}
+			},
+			{
+				"name": "MergeWorksToCurated",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "LoadWorksToStaging",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "EXEC dbo.usp_MergeOpenAlexWorks;"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
 				}
 			}
 		],

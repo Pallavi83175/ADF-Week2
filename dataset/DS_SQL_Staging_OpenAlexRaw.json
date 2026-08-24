@@ -1,0 +1,35 @@
+{
+	"name": "DS_SQL_Staging_OpenAlexRaw",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "Id",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "RawJson",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SourceFile",
+				"type": "nvarchar"
+			},
+			{
+				"name": "IngestTs",
+				"type": "datetime2",
+				"scale": 3
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "stg_OpenAlexRaw"
+		}
+	}
+}
