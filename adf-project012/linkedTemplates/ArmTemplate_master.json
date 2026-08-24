@@ -35,6 +35,10 @@
 			"type": "string",
 			"defaultValue": "CloudSA8fd1ceba"
 		},
+		"LS_REST_OpenAlex_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://api.openalex.org/"
+		},
 		"RestService1_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://api.openweathermap.org"
@@ -86,6 +90,9 @@
 					},
 					"AzureSqlDatabase1_properties_typeProperties_userName": {
 						"value": "[parameters('AzureSqlDatabase1_properties_typeProperties_userName')]"
+					},
+					"LS_REST_OpenAlex_properties_typeProperties_url": {
+						"value": "[parameters('LS_REST_OpenAlex_properties_typeProperties_url')]"
 					},
 					"RestService1_properties_typeProperties_url": {
 						"value": "[parameters('RestService1_properties_typeProperties_url')]"

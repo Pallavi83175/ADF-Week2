@@ -26,6 +26,9 @@
 		"AzureSqlDatabase1_properties_typeProperties_userName": {
 			"value": "CloudSA8fd1ceba"
 		},
+		"LS_REST_OpenAlex_properties_typeProperties_url": {
+			"value": "https://api.openalex.org/"
+		},
 		"RestService1_properties_typeProperties_url": {
 			"value": "https://api.openweathermap.org"
 		},

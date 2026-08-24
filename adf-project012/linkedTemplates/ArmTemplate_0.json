@@ -35,6 +35,10 @@
 			"type": "string",
 			"defaultValue": "CloudSA8fd1ceba"
 		},
+		"LS_REST_OpenAlex_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://api.openalex.org/"
+		},
 		"RestService1_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://api.openweathermap.org"
@@ -119,6 +123,27 @@
 						"type": "SecureString",
 						"value": "[parameters('AzureSqlDatabase1_password')]"
 					}
+				},
+				"connectVia": {
+					"referenceName": "integrationRuntime1",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/integrationRuntime1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_REST_OpenAlex')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "RestService",
+				"typeProperties": {
+					"url": "[parameters('LS_REST_OpenAlex_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
 				},
 				"connectVia": {
 					"referenceName": "integrationRuntime1",
@@ -239,7 +264,316 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/AzureSqlTable3')]",
+			"name": "[concat(parameters('factoryName'), '/DS_ADLS_Customers_Target')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"pTargetPath": {
+						"type": "string",
+						"defaultValue": "raw/customers"
+					}
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "customers.parquet",
+						"folderPath": "raw",
+						"fileSystem": "dev"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_ADLS_OpenAlex_Raw')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "raw/openalex/works",
+						"fileSystem": "dev"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_REST_OpenAlex')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_REST_OpenAlex",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {
+					"relativeUrl": "works?per-page=10"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_REST_OpenAlex')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SQL_Staging_OpenAlexAuthors')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "WorkId",
+						"type": "nvarchar"
+					},
+					{
+						"name": "AuthorId",
+						"type": "nvarchar"
+					},
+					{
+						"name": "AuthorName",
+						"type": "nvarchar"
+					},
+					{
+						"name": "AuthorPosition",
+						"type": "nvarchar"
+					},
+					{
+						"name": "IsCorresponding",
+						"type": "bit"
+					},
+					{
+						"name": "IngestTs",
+						"type": "datetime2",
+						"scale": 3
+					},
+					{
+						"name": "SourceFile",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "stg_OpenAlexAuthors"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SQL_Staging_OpenAlexRaw')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "RawJson",
+						"type": "nvarchar"
+					},
+					{
+						"name": "SourceFile",
+						"type": "nvarchar"
+					},
+					{
+						"name": "IngestTs",
+						"type": "datetime2",
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "stg_OpenAlexRaw"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SQL_Staging_OpenAlexTopics')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "WorkId",
+						"type": "nvarchar"
+					},
+					{
+						"name": "TopicId",
+						"type": "nvarchar"
+					},
+					{
+						"name": "TopicName",
+						"type": "nvarchar"
+					},
+					{
+						"name": "SubfieldName",
+						"type": "nvarchar"
+					},
+					{
+						"name": "FieldName",
+						"type": "nvarchar"
+					},
+					{
+						"name": "DomainName",
+						"type": "nvarchar"
+					},
+					{
+						"name": "IngestTs",
+						"type": "datetime2",
+						"scale": 3
+					},
+					{
+						"name": "SourceFile",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "stg_OpenAlexTopics"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SQL_Staging_OpenAlexWorks')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "WorkId",
+						"type": "nvarchar"
+					},
+					{
+						"name": "DOI",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Title",
+						"type": "nvarchar"
+					},
+					{
+						"name": "PublicationYear",
+						"type": "int"
+					},
+					{
+						"name": "PublicationDate",
+						"type": "date"
+					},
+					{
+						"name": "Type",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Language",
+						"type": "nvarchar"
+					},
+					{
+						"name": "CitedByCount",
+						"type": "int"
+					},
+					{
+						"name": "IsOpenAccess",
+						"type": "bit"
+					},
+					{
+						"name": "PrimarySource",
+						"type": "nvarchar"
+					},
+					{
+						"name": "CountryCode",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Latitude",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 6
+					},
+					{
+						"name": "Longitude",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 6
+					},
+					{
+						"name": "IngestTs",
+						"type": "datetime2",
+						"scale": 3
+					},
+					{
+						"name": "SourceFile",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "stg_OpenAlexWorks"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SQL_Watermark')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -284,231 +618,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/AzureSqlTable4')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "AzureSqlDatabase1",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "dt",
-						"type": "bigint",
-						"precision": 19
-					},
-					{
-						"name": "Latitude",
-						"type": "decimal",
-						"precision": 9,
-						"scale": 6
-					},
-					{
-						"name": "Longitude",
-						"type": "decimal",
-						"precision": 9,
-						"scale": 6
-					},
-					{
-						"name": "Timezone",
-						"type": "nvarchar"
-					},
-					{
-						"name": "TimezoneOffset",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "Sunrise",
-						"type": "bigint",
-						"precision": 19
-					},
-					{
-						"name": "Sunset",
-						"type": "bigint",
-						"precision": 19
-					},
-					{
-						"name": "Moonrise",
-						"type": "bigint",
-						"precision": 19
-					},
-					{
-						"name": "Moonset",
-						"type": "bigint",
-						"precision": 19
-					},
-					{
-						"name": "MoonPhase",
-						"type": "decimal",
-						"precision": 10,
-						"scale": 4
-					},
-					{
-						"name": "IngestTs",
-						"type": "datetime2",
-						"scale": 3
-					},
-					{
-						"name": "SourceFile",
-						"type": "nvarchar"
-					}
-				],
-				"typeProperties": {
-					"schema": "dbo",
-					"table": "Weather"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/AzureSqlTable5')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "AzureSqlDatabase1",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "LocationId",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "Latitude",
-						"type": "decimal",
-						"precision": 9,
-						"scale": 6
-					},
-					{
-						"name": "Longitude",
-						"type": "decimal",
-						"precision": 9,
-						"scale": 6
-					},
-					{
-						"name": "Timezone",
-						"type": "nvarchar"
-					},
-					{
-						"name": "TimezoneOffset",
-						"type": "int",
-						"precision": 10
-					}
-				],
-				"typeProperties": {
-					"schema": "dbo",
-					"table": "WeatherLocation"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/AzureSqlTable6')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "AzureSqlDatabase1",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "dt",
-						"type": "bigint",
-						"precision": 19
-					},
-					{
-						"name": "sunrise",
-						"type": "bigint",
-						"precision": 19
-					},
-					{
-						"name": "sunset",
-						"type": "bigint",
-						"precision": 19
-					},
-					{
-						"name": "moonrise",
-						"type": "bigint",
-						"precision": 19
-					},
-					{
-						"name": "moonset",
-						"type": "bigint",
-						"precision": 19
-					},
-					{
-						"name": "moon_phase",
-						"type": "decimal",
-						"precision": 10,
-						"scale": 4
-					},
-					{
-						"name": "ingest_ts",
-						"type": "datetime2",
-						"scale": 3
-					},
-					{
-						"name": "source_file",
-						"type": "nvarchar"
-					}
-				],
-				"typeProperties": {
-					"schema": "dbo",
-					"table": "stg_Weather"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DS_ADLS_Customers_Target')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "AzureDataLakeStorage1",
-					"type": "LinkedServiceReference"
-				},
-				"parameters": {
-					"pTargetPath": {
-						"type": "string",
-						"defaultValue": "raw/customers"
-					}
-				},
-				"annotations": [],
-				"type": "Parquet",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"fileName": "customers.parquet",
-						"folderPath": "raw",
-						"fileSystem": "dev"
-					},
-					"compressionCodec": "snappy"
-				},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorage1')]"
 			]
 		},
 		{
@@ -690,728 +799,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorage1')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/RestResource1')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "RestService1",
-					"type": "LinkedServiceReference"
-				},
-				"parameters": {
-					"lat": {
-						"type": "string"
-					},
-					"lon": {
-						"type": "string"
-					},
-					"appid": {
-						"type": "string"
-					},
-					"units": {
-						"type": "string"
-					}
-				},
-				"annotations": [],
-				"type": "RestResource",
-				"typeProperties": {
-					"relativeUrl": {
-						"value": "@concat('/data/2.5/weather?lat=',dataset().lat,'&lon=',dataset().lon,'&appid=',dataset().appid,'&units=',dataset().units)",
-						"type": "Expression"
-					}
-				},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/RestService1')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/PL_Metadata_Driven_Load')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Lookup1",
-						"type": "Lookup",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "AzureSqlSource",
-								"sqlReaderQuery": "SELECT\n    SourceSchema,\n    SourceTable,\n    TargetPath,\n    LoadType,\n    WatermarkColumn\nFROM dbo.ETL_Metadata\nWHERE IsActive = 1;",
-								"queryTimeout": "02:00:00",
-								"partitionOption": "None"
-							},
-							"dataset": {
-								"referenceName": "AzureSqlTable1",
-								"type": "DatasetReference",
-								"parameters": {
-									"pSchema": "dbo",
-									"pTable": "Customers"
-								}
-							},
-							"firstRowOnly": false
-						}
-					},
-					{
-						"name": "ForEach1",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "Lookup1",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('Lookup1').output.value",
-								"type": "Expression"
-							},
-							"activities": [
-								{
-									"name": "Copy data1",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "AzureSqlSource",
-											"sqlReaderQuery": {
-												"value": "@concat(\n    'SELECT * FROM [',\n    item().SourceSchema,\n    '].[',\n    item().SourceTable,\n    ']'\n)",
-												"type": "Expression"
-											},
-											"queryTimeout": "02:00:00",
-											"partitionOption": "None"
-										},
-										"sink": {
-											"type": "ParquetSink",
-											"storeSettings": {
-												"type": "AzureBlobFSWriteSettings"
-											},
-											"formatSettings": {
-												"type": "ParquetWriteSettings"
-											}
-										},
-										"enableStaging": false,
-										"translator": {
-											"type": "TabularTranslator",
-											"typeConversion": true,
-											"typeConversionSettings": {
-												"allowDataTruncation": true,
-												"treatBooleanAsNumber": false
-											}
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "AzureSqlTable1",
-											"type": "DatasetReference",
-											"parameters": {
-												"pSchema": "dbo",
-												"pTable": "Customers"
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "DS_ADLS_Customers_Target",
-											"type": "DatasetReference",
-											"parameters": {
-												"pTargetPath": "raw/customers"
-											}
-										}
-									]
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/AzureSqlTable1')]",
-				"[concat(variables('factoryId'), '/datasets/DS_ADLS_Customers_Target')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Copy data1",
-						"type": "Copy",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "DelimitedTextSource",
-								"storeSettings": {
-									"type": "AzureBlobFSReadSettings",
-									"recursive": true,
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "DelimitedTextReadSettings"
-								}
-							},
-							"sink": {
-								"type": "AzureSqlSink",
-								"writeBehavior": "insert",
-								"sqlWriterUseTableLock": false,
-								"disableMetricsCollection": false
-							},
-							"enableStaging": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"mappings": [
-									{
-										"source": {
-											"name": "CustomerID",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "CustomerID",
-											"type": "Int32",
-											"physicalType": "int"
-										}
-									},
-									{
-										"source": {
-											"name": "FirstName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "FirstName",
-											"type": "String",
-											"physicalType": "varchar"
-										}
-									},
-									{
-										"source": {
-											"name": "LastName",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "LastName",
-											"type": "String",
-											"physicalType": "varchar"
-										}
-									},
-									{
-										"source": {
-											"name": "Email",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Email",
-											"type": "String",
-											"physicalType": "varchar"
-										}
-									},
-									{
-										"source": {
-											"name": "City",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "City",
-											"type": "String",
-											"physicalType": "varchar"
-										}
-									},
-									{
-										"source": {
-											"name": "Country",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "Country",
-											"type": "String",
-											"physicalType": "varchar"
-										}
-									},
-									{
-										"source": {
-											"name": "CreatedDate",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "CreatedDate",
-											"type": "Date",
-											"physicalType": "date"
-										}
-									}
-								],
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "DelimitedText3",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "AzureSqlTable2",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						]
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"annotations": [],
-				"lastPublishTime": "2026-08-19T04:44:10Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/DelimitedText3')]",
-				"[concat(variables('factoryId'), '/datasets/AzureSqlTable2')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/pl_ingest_weather_incremental')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "GetWatermark",
-						"type": "Lookup",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 4,
-							"retryIntervalInSeconds": 45,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "AzureSqlSource",
-								"sqlReaderQuery": "SELECT TOP 1 WatermarkValue FROM dbo.ETL_Watermark WHERE SourceSystem = 'SourceAPI' AND EntityName = 'Weather' ORDER BY LastRunUtc DESC",
-								"queryTimeout": "00:05:00",
-								"partitionOption": "None"
-							},
-							"dataset": {
-								"referenceName": "AzureSqlTable3",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"firstRowOnly": true
-						}
-					},
-					{
-						"name": "GetWeatherLocations",
-						"type": "Lookup",
-						"dependsOn": [
-							{
-								"activity": "GetWatermark",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 4,
-							"retryIntervalInSeconds": 45,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "AzureSqlSource",
-								"sqlReaderQuery": "SELECT LocationId, Latitude, Longitude, Timezone, TimezoneOffset FROM dbo.WeatherLocation WHERE Latitude IS NOT NULL AND Longitude IS NOT NULL ORDER BY LocationId",
-								"queryTimeout": "00:05:00",
-								"partitionOption": "None"
-							},
-							"dataset": {
-								"referenceName": "AzureSqlTable5",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"firstRowOnly": false
-						}
-					},
-					{
-						"name": "ForEachLocation",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "GetWeatherLocations",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('GetWeatherLocations').output.value",
-								"type": "Expression"
-							},
-							"isSequential": true,
-							"activities": [
-								{
-									"name": "GetWeatherAPI",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 4,
-										"retryIntervalInSeconds": 45,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "RestSource",
-											"httpRequestTimeout": "00:05:00",
-											"requestInterval": "00.00:00:00.100",
-											"requestMethod": "GET"
-										},
-										"sink": {
-											"type": "JsonSink",
-											"storeSettings": {
-												"type": "AzureBlobFSWriteSettings"
-											},
-											"formatSettings": {
-												"type": "JsonWriteSettings"
-											}
-										},
-										"enableStaging": false
-									},
-									"inputs": [
-										{
-											"referenceName": "RestResource1",
-											"type": "DatasetReference",
-											"parameters": {
-												"lat": {
-													"value": "@string(item().Latitude)",
-													"type": "Expression"
-												},
-												"lon": {
-													"value": "@string(item().Longitude)",
-													"type": "Expression"
-												},
-												"appid": {
-													"value": "@pipeline().parameters.appid",
-													"type": "Expression"
-												},
-												"units": {
-													"value": "@pipeline().parameters.units",
-													"type": "Expression"
-												}
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "Json1",
-											"type": "DatasetReference",
-											"parameters": {}
-										}
-									]
-								},
-								{
-									"name": "CopyRawToStaging",
-									"type": "Copy",
-									"dependsOn": [
-										{
-											"activity": "GetWeatherAPI",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 4,
-										"retryIntervalInSeconds": 45,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "JsonSource",
-											"storeSettings": {
-												"type": "AzureBlobFSReadSettings",
-												"recursive": false
-											},
-											"formatSettings": {
-												"type": "JsonReadSettings"
-											}
-										},
-										"sink": {
-											"type": "AzureSqlSink",
-											"writeBehavior": "insert",
-											"sqlWriterUseTableLock": false
-										},
-										"enableStaging": false,
-										"translator": {
-											"type": "TabularTranslator",
-											"mappings": [
-												{
-													"source": {
-														"path": "$['dt']"
-													},
-													"sink": {
-														"name": "dt"
-													}
-												},
-												{
-													"source": {
-														"path": "$['coord']['lat']"
-													},
-													"sink": {
-														"name": "Latitude"
-													}
-												},
-												{
-													"source": {
-														"path": "$['coord']['lon']"
-													},
-													"sink": {
-														"name": "Longitude"
-													}
-												},
-												{
-													"source": {
-														"path": "$['timezone']"
-													},
-													"sink": {
-														"name": "TimezoneOffset"
-													}
-												},
-												{
-													"source": {
-														"path": "$['sys']['sunrise']"
-													},
-													"sink": {
-														"name": "Sunrise"
-													}
-												},
-												{
-													"source": {
-														"path": "$['sys']['sunset']"
-													},
-													"sink": {
-														"name": "Sunset"
-													}
-												}
-											]
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "Json1",
-											"type": "DatasetReference",
-											"parameters": {}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "AzureSqlTable6",
-											"type": "DatasetReference",
-											"parameters": {}
-										}
-									]
-								}
-							]
-						}
-					},
-					{
-						"name": "SetStagingAudit",
-						"type": "Script",
-						"dependsOn": [
-							{
-								"activity": "ForEachLocation",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 3,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"linkedServiceName": {
-							"referenceName": "AzureSqlDatabase1",
-							"type": "LinkedServiceReference"
-						},
-						"typeProperties": {
-							"scripts": [
-								{
-									"type": "Query",
-									"text": "UPDATE dbo.stg_Weather SET IngestTs = COALESCE(IngestTs, SYSUTCDATETIME()), SourceFile = COALESCE(SourceFile, 'weather.json') WHERE IngestTs IS NULL OR SourceFile IS NULL;"
-								}
-							],
-							"scriptBlockExecutionTimeout": "00:05:00"
-						}
-					},
-					{
-						"name": "MergeToCurated",
-						"type": "SqlServerStoredProcedure",
-						"dependsOn": [
-							{
-								"activity": "SetStagingAudit",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 4,
-							"retryIntervalInSeconds": 45,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"storedProcedureName": "dbo.usp_MergeWeather"
-						},
-						"linkedServiceName": {
-							"referenceName": "AzureSqlDatabase1",
-							"type": "LinkedServiceReference"
-						}
-					},
-					{
-						"name": "UpdateWatermark",
-						"type": "SqlServerStoredProcedure",
-						"dependsOn": [
-							{
-								"activity": "MergeToCurated",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 4,
-							"retryIntervalInSeconds": 45,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"storedProcedureName": "dbo.usp_UpdateWatermark",
-							"storedProcedureParameters": {
-								"SourceSystem": {
-									"value": "SourceAPI"
-								},
-								"EntityName": {
-									"value": "Weather"
-								},
-								"NewWatermark": {
-									"value": {
-										"value": "@utcnow()",
-										"type": "Expression"
-									}
-								},
-								"RowsExtracted": {
-									"value": {
-										"value": "@activity('CopyRawToStaging').output.rowsCopied",
-										"type": "Expression"
-									}
-								}
-							}
-						},
-						"linkedServiceName": {
-							"referenceName": "AzureSqlDatabase1",
-							"type": "LinkedServiceReference"
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"appid": {
-						"type": "String",
-						"defaultValue": "pl_ingest_weather_incremental"
-					},
-					"units": {
-						"type": "String",
-						"defaultValue": "metric"
-					}
-				},
-				"annotations": [
-					"Project1",
-					"Weather",
-					"REST",
-					"ADLS",
-					"ForEach",
-					"Staging",
-					"Curated",
-					"Watermark"
-				]
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/AzureSqlTable3')]",
-				"[concat(variables('factoryId'), '/datasets/AzureSqlTable5')]",
-				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]",
-				"[concat(variables('factoryId'), '/datasets/RestResource1')]",
-				"[concat(variables('factoryId'), '/datasets/Json1')]",
-				"[concat(variables('factoryId'), '/datasets/AzureSqlTable6')]"
 			]
 		}
 	]
