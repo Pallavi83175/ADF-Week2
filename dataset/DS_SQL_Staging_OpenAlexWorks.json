@@ -1,0 +1,82 @@
+{
+	"name": "DS_SQL_Staging_OpenAlexWorks",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "WorkId",
+				"type": "nvarchar"
+			},
+			{
+				"name": "DOI",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Title",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PublicationYear",
+				"type": "int"
+			},
+			{
+				"name": "PublicationDate",
+				"type": "date"
+			},
+			{
+				"name": "Type",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Language",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CitedByCount",
+				"type": "int"
+			},
+			{
+				"name": "IsOpenAccess",
+				"type": "bit"
+			},
+			{
+				"name": "PrimarySource",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CountryCode",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Latitude",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 6
+			},
+			{
+				"name": "Longitude",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 6
+			},
+			{
+				"name": "IngestTs",
+				"type": "datetime2",
+				"scale": 3
+			},
+			{
+				"name": "SourceFile",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "stg_OpenAlexWorks"
+		}
+	}
+}

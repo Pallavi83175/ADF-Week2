@@ -1,0 +1,19 @@
+{
+	"name": "DS_ADLS_OpenAlex_Raw",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataLakeStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": "raw/openalex/works",
+				"fileSystem": "dev"
+			}
+		},
+		"schema": {}
+	}
+}

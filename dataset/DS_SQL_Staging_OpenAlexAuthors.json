@@ -1,5 +1,5 @@
 {
-	"name": "watermark",
+	"name": "DS_SQL_Staging_OpenAlexAuthors",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "AzureSqlDatabase1",
@@ -9,35 +9,38 @@
 		"type": "AzureSqlTable",
 		"schema": [
 			{
-				"name": "SourceSystem",
+				"name": "WorkId",
 				"type": "nvarchar"
 			},
 			{
-				"name": "EntityName",
+				"name": "AuthorId",
 				"type": "nvarchar"
 			},
 			{
-				"name": "WatermarkValue",
+				"name": "AuthorName",
 				"type": "nvarchar"
 			},
 			{
-				"name": "LastRunUtc",
+				"name": "AuthorPosition",
+				"type": "nvarchar"
+			},
+			{
+				"name": "IsCorresponding",
+				"type": "bit"
+			},
+			{
+				"name": "IngestTs",
 				"type": "datetime2",
 				"scale": 3
 			},
 			{
-				"name": "RowsExtracted",
-				"type": "bigint",
-				"precision": 19
-			},
-			{
-				"name": "Status",
+				"name": "SourceFile",
 				"type": "nvarchar"
 			}
 		],
 		"typeProperties": {
 			"schema": "dbo",
-			"table": "ETL_Watermark"
+			"table": "stg_OpenAlexAuthors"
 		}
 	}
 }

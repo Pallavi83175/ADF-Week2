@@ -22,7 +22,7 @@
 						"partitionOption": "None"
 					},
 					"dataset": {
-						"referenceName": "AzureSqlTable3",
+						"referenceName": "watermark",
 						"type": "DatasetReference"
 					},
 					"firstRowOnly": true
@@ -53,10 +53,6 @@
 						"sqlReaderQuery": "SELECT LocationId, Latitude, Longitude, Timezone, TimezoneOffset FROM dbo.WeatherLocation WHERE Latitude IS NOT NULL AND Longitude IS NOT NULL ORDER BY LocationId",
 						"queryTimeout": "00:05:00",
 						"partitionOption": "None"
-					},
-					"dataset": {
-						"referenceName": "AzureSqlTable5",
-						"type": "DatasetReference"
 					},
 					"firstRowOnly": false
 				}
@@ -234,12 +230,6 @@
 							"inputs": [
 								{
 									"referenceName": "Json1",
-									"type": "DatasetReference"
-								}
-							],
-							"outputs": [
-								{
-									"referenceName": "AzureSqlTable6",
 									"type": "DatasetReference"
 								}
 							]

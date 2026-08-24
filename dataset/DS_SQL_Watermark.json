@@ -1,5 +1,5 @@
 {
-	"name": "watermark",
+	"name": "DS_SQL_Watermark",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "AzureSqlDatabase1",

@@ -1,0 +1,50 @@
+{
+	"name": "DS_SQL_Staging_OpenAlexTopics",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "WorkId",
+				"type": "nvarchar"
+			},
+			{
+				"name": "TopicId",
+				"type": "nvarchar"
+			},
+			{
+				"name": "TopicName",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SubfieldName",
+				"type": "nvarchar"
+			},
+			{
+				"name": "FieldName",
+				"type": "nvarchar"
+			},
+			{
+				"name": "DomainName",
+				"type": "nvarchar"
+			},
+			{
+				"name": "IngestTs",
+				"type": "datetime2",
+				"scale": 3
+			},
+			{
+				"name": "SourceFile",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "stg_OpenAlexTopics"
+		}
+	}
+}

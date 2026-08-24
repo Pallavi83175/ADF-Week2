@@ -1,0 +1,12 @@
+{
+	"name": "DS_REST_OpenAlex",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_REST_OpenAlex",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"schema": []
+	}
+}
