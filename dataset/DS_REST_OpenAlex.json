@@ -7,6 +7,9 @@
 		},
 		"annotations": [],
 		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": "works?filter=publication_year:2024&per-page=10"
+		},
 		"schema": []
 	}
 }
